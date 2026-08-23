@@ -95,3 +95,17 @@ handlers["pauseBtn"].click();
 handlers["quitBtn"].click();
 stepFrames(5);
 console.log("PAUS OK");
+
+// --- troféer ---
+const tBtn = document.getElementById("trophyBtn");
+const m = /^Trophies · (\d+) \/ 31$/.exec(tBtn.textContent);
+if (!m) throw new Error("trofé-knappen visar fel etikett: " + tBtn.textContent);
+if (+m[1] < 1) throw new Error("ingen trofé låstes upp under körningen");
+if (!document.getElementById("tToastName").textContent) throw new Error("ingen trofé-toast visades");
+handlers["trophyBtn"].click();
+if (document.getElementById("trophySheet").hidden) throw new Error("trofésidan öppnades inte");
+const rows = (document.getElementById("trophyList").innerHTML.match(/class="t-row/g) || []).length;
+if (rows !== 31) throw new Error("fel antal troféer i samlingen: " + rows);
+handlers["trophyBackBtn"].click();
+if (!document.getElementById("trophySheet").hidden) throw new Error("trofésidan stängdes inte");
+console.log("TROFÉER OK (" + m[1] + "/31)");

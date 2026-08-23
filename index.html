@@ -90,6 +90,60 @@
   .score{font-family:"Caveat",cursive;font-size:76px;line-height:1;color:var(--ink);margin:6px 0 0}
   .best{font-size:12px;letter-spacing:.14em;color:var(--pale);margin-top:10px}
   .daily-info{margin-top:14px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pale)}
+  /* ---------- trophies: paper slip toast + collection page ---------- */
+  .sheet.scroll{justify-content:flex-start;overflow-y:auto;padding-top:28px;z-index:4}
+  .t-toast{
+    position:absolute;left:50%;top:-150px;z-index:6;
+    display:flex;align-items:center;gap:13px;
+    width:min(304px,80%);padding:10px 15px 10px 16px;
+    background:var(--paper);border:1.5px solid var(--ink);border-left:6px solid var(--margin-red);
+    border-radius:2px;box-shadow:3px 4px 0 rgba(42,49,56,.15);
+    transform:translateX(-50%) rotate(-1.4deg);
+    transition:top .5s cubic-bezier(.34,1.56,.64,1);
+    pointer-events:none;
+  }
+  .t-toast[hidden]{display:none}
+  .t-toast.show{top:72px}
+  .t-toast .ico{font-size:26px;line-height:1}
+  .t-toast .lbl{font-size:8.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--pale)}
+  .t-toast .nm{font-family:"Caveat",cursive;font-weight:700;font-size:27px;line-height:1.1;color:var(--ink)}
+  .t-stamp{
+    display:inline-block;margin-top:3px;
+    font-family:"IBM Plex Mono",monospace;font-size:8px;font-weight:600;
+    letter-spacing:.2em;text-transform:uppercase;color:var(--pale);
+    border:1.5px solid currentColor;border-radius:2px;padding:1px 5px;
+    transform:rotate(-3.5deg);
+  }
+  .t-stamp.bronze{color:#A9713F}
+  .t-stamp.silver{color:#7B8896}
+  .t-stamp.gold{color:#C08A1E}
+  .t-stamp.platinum{color:var(--margin-red)}
+  .t-title{font-family:"Caveat",cursive;font-weight:700;font-size:52px;line-height:1;color:var(--ink);margin-top:8px}
+  .t-count{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--pale);margin:8px 0 4px}
+  .t-list{width:100%;max-width:352px;text-align:left}
+  .t-head{
+    display:flex;align-items:center;gap:9px;margin:18px 0 4px;
+    font-size:9.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--pale);
+  }
+  .t-head::after{content:"";flex:1;height:1px;background:var(--grid)}
+  .t-head.bronze{color:#A9713F}
+  .t-head.silver{color:#7B8896}
+  .t-head.gold{color:#C08A1E}
+  .t-head.platinum{color:var(--margin-red)}
+  .t-row{display:flex;align-items:flex-start;gap:11px;padding:8px 0;border-bottom:1px dashed var(--grid)}
+  .t-row .ic{
+    width:27px;height:27px;flex:0 0 27px;display:flex;align-items:center;justify-content:center;
+    font-size:15px;border:1.5px dashed var(--grid);border-radius:2px;color:var(--pale);
+  }
+  .t-row.got .ic{border-style:solid}
+  .t-row.got.bronze .ic{border-color:#A9713F}
+  .t-row.got.silver .ic{border-color:#7B8896}
+  .t-row.got.gold .ic{border-color:#C08A1E}
+  .t-row.got.platinum .ic{border-color:var(--margin-red)}
+  .t-row .nm{font-size:12px;font-weight:600;letter-spacing:.02em;color:var(--pale)}
+  .t-row.got .nm{color:var(--ink)}
+  .t-row .ds{font-size:10px;line-height:1.5;color:var(--pale);margin-top:2px}
+  .t-row.got .ds{color:var(--graphite)}
   @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
 </style>
 </head>
@@ -156,6 +210,7 @@
     <button class="btn" id="startBtn">Free climb</button>
     <button class="btn" id="resumeBtn" hidden>Continue</button>
     <button class="btn" id="dailyBtn">Daily challenge · 500 m</button>
+    <button class="btn ghost" id="trophyBtn">Trophies</button>
     <div class="daily-info" id="dailyInfo"></div>
     <div class="daily-info" id="saveNote" hidden>note: records are not saved in this preview</div>
   </div>
@@ -174,6 +229,24 @@
     <button class="btn" id="shareBtn" hidden>Copy result</button>
     <button class="btn" id="contBtn">Continue</button>
     <button class="btn ghost" id="againBtn">From the start</button>
+    <button class="btn ghost" id="overTrophyBtn">Trophies</button>
+  </div>
+
+  <div class="sheet scroll" id="trophySheet" hidden>
+    <div class="eyebrow">the collection</div>
+    <div class="t-title">trophies</div>
+    <div class="t-count" id="trophyCount">0 / 31</div>
+    <div class="t-list" id="trophyList"></div>
+    <button class="btn ghost" id="trophyBackBtn">Back</button>
+  </div>
+
+  <div class="t-toast" id="tToast" hidden>
+    <div class="ico" id="tToastIcon">✏️</div>
+    <div>
+      <div class="lbl">trophy unlocked</div>
+      <div class="nm" id="tToastName">First Stroke</div>
+      <span class="t-stamp bronze" id="tToastTier">bronze</span>
+    </div>
   </div>
 </div>
 
@@ -271,6 +344,299 @@ const STORE = (() => {
   return { get, set, persistent: () => ok };
 })();
 
+/* ---------- trophies: 31 in the GameVolt ladder ---------- */
+// 15 bronze / 10 silver / 5 gold / 1 platinum, exactly as the portal expects.
+// Local-first: everything works offline, the GameVolt SDK is optional and only
+// kicks in when the game runs on gamevolt.io (cloud unlock, cross-device sync).
+const GAME_ID = "ink";
+const TROPHIES = (() => {
+  const M = MPX;   // px per metre — ink is measured in pixels of drawn stroke
+  const LIST = [
+    /* ---- bronze (15): turns up while you learn the pen ---- */
+    {id:"first-stroke",     icon:"✏️", name:"First Stroke",     desc:"Draw your first line",               tier:"bronze", cond:s => s.strokes >= 1},
+    {id:"contact",          icon:"✒️", name:"Contact",          desc:"Bounce the ball off a stroke",       tier:"bronze", cond:s => s.bounces >= 1},
+    {id:"blotter",          icon:"💧", name:"Blotter",          desc:"Soak up an ink blot",                tier:"bronze", cond:s => s.orbs >= 1},
+    {id:"off-the-margin",   icon:"📏", name:"Off the Margin",   desc:"Climb 100 m in one run",             tier:"bronze", cond:s => s.bestM >= 100},
+    {id:"page-two",         icon:"📄", name:"Page Two",         desc:"Climb 200 m in one run",             tier:"bronze", cond:s => s.bestM >= 200},
+    {id:"breaking-ruled",   icon:"🧱", name:"Breaking Ruled",   desc:"Break 25 blocks",                    tier:"bronze", cond:s => s.blocks >= 25},
+    {id:"ping",             icon:"🔶", name:"Ping",             desc:"Score off 20 bumpers",               tier:"bronze", cond:s => s.bumps >= 20},
+    {id:"stargazer",        icon:"⭐", name:"Stargazer",        desc:"Collect 25 stars",                   tier:"bronze", cond:s => s.stars >= 25},
+    {id:"chain-of-thought", icon:"🔗", name:"Chain of Thought", desc:"Reach a ×5 combo",                   tier:"bronze", cond:s => s.bestCombo >= 5},
+    {id:"well-marked",      icon:"🧮", name:"Well Marked",      desc:"Score 5,000 points in one run",      tier:"bronze", cond:s => s.bestPts >= 5000},
+    {id:"warm-pen",         icon:"🖊️", name:"Warm Pen",         desc:"Draw 250 m of line in total",        tier:"bronze", cond:s => s.inkPx >= 250*M},
+    {id:"point-taken",      icon:"📌", name:"Point Taken",      desc:"Find out what the red spikes do",    tier:"bronze", cond:s => s.spikeDeaths >= 1},
+    {id:"bookmark",         icon:"🔖", name:"Bookmark",         desc:"Continue a climb from a checkpoint", tier:"bronze", cond:s => s.cpRuns >= 1},
+    {id:"doodler",          icon:"🌀", name:"Doodler",          desc:"Play 10 runs",                       tier:"bronze", cond:s => s.runs >= 10},
+    {id:"homework",         icon:"📅", name:"Homework",         desc:"Take on the daily challenge",        tier:"bronze", cond:s => s.dailyRuns >= 1},
+    /* ---- silver (10): deliberate effort ---- */
+    {id:"page-four",        icon:"📚", name:"Page Four",        desc:"Climb 400 m in one run",             tier:"silver", cond:s => s.bestM >= 400},
+    {id:"train-of-thought", icon:"🚂", name:"Train of Thought", desc:"Reach a ×12 combo",                  tier:"silver", cond:s => s.bestCombo >= 12},
+    {id:"straight-as",      icon:"🅰️", name:"Straight A's",     desc:"Score 25,000 points in one run",     tier:"silver", cond:s => s.bestPts >= 25000},
+    {id:"gilded",           icon:"🟨", name:"Gilded",           desc:"Break 10 gold blocks",               tier:"silver", cond:s => s.goldBlocks >= 10},
+    {id:"star-pupil",       icon:"🌟", name:"Star Pupil",       desc:"Collect 150 stars",                  tier:"silver", cond:s => s.stars >= 150},
+    {id:"kilometre-of-ink", icon:"🖋️", name:"A Kilometre of Ink",desc:"Draw 1 km of line in total",        tier:"silver", cond:s => s.inkPx >= 1000*M},
+    {id:"deadline-met",     icon:"✅", name:"Deadline Met",     desc:"Finish the daily challenge",         tier:"silver", cond:s => s.dailyDone >= 1},
+    {id:"three-days-running",icon:"🔥",name:"Three Days Running",desc:"Keep a 3-day daily streak",         tier:"silver", cond:s => s.dailyStreak >= 3},
+    {id:"frugal-hand",      icon:"🤏", name:"Frugal Hand",      desc:"Reach 200 m on 8 strokes or fewer",  tier:"silver", cond:s => s.thrifty >= 1},
+    {id:"notebook-filled",  icon:"📓", name:"Notebook Filled",  desc:"Play 50 runs",                       tier:"silver", cond:s => s.runs >= 50},
+    /* ---- gold (5): the deep end of the notebook ---- */
+    {id:"magnetic-north",   icon:"🧲", name:"Magnetic North",   desc:"Climb 800 m in one run",             tier:"gold",   cond:s => s.bestM >= 800},
+    {id:"gold-star",        icon:"🏅", name:"The Gold Star",    desc:"Catch the big gold star",            tier:"gold",   cond:s => s.goldStars >= 1},
+    {id:"runaway-chain",    icon:"⛓️", name:"Runaway Chain",    desc:"Reach a ×25 combo",                  tier:"gold",   cond:s => s.bestCombo >= 25},
+    {id:"six-figures",      icon:"💯", name:"Six Figures",      desc:"Score 100,000 points in one run",    tier:"gold",   cond:s => s.bestPts >= 100000},
+    {id:"full-marks",       icon:"🎓", name:"Full Marks",       desc:"Clear the daily under all five rules",tier:"gold",  cond:s => s.rules.length >= 5},
+    /* ---- platinum (1): the completionist ---- */
+    {id:"ink-master",       icon:"👑", name:"INK Master",       desc:"Unlock the other 30 trophies",       tier:"platinum", cond:null}
+  ];
+  const TIERS = ["bronze", "silver", "gold", "platinum"];
+
+  const DEF = {
+    runs:0, dailyRuns:0, cpRuns:0, strokes:0, bounces:0, inkPx:0,
+    blocks:0, goldBlocks:0, orbs:0, stars:0, goldStars:0, bumps:0,
+    spikeDeaths:0, falls:0, bestM:0, bestPts:0, bestCombo:0,
+    dailyDone:0, dailyStreak:0, thrifty:0
+  };
+
+  function freshStats(){
+    const s = {rules:[]};                 // rules: names of daily rules cleared
+    for (const k in DEF) s[k] = DEF[k];
+    return s;
+  }
+  function loadStats(){
+    const s = freshStats();
+    const raw = STORE.get("stats", null);
+    if (raw && typeof raw === "object"){
+      for (const k in DEF) if (typeof raw[k] === "number") s[k] = raw[k];
+      if (Array.isArray(raw.rules)) s.rules = raw.rules.slice();
+    }
+    return s;
+  }
+
+  let stats = loadStats();
+  let unlocked = STORE.get("trophies", []);
+  if (!Array.isArray(unlocked)) unlocked = [];
+  let runStrokes = 0, runCp = false;
+
+  const elToast = document.getElementById("tToast");
+  const elIcon  = document.getElementById("tToastIcon");
+  const elName  = document.getElementById("tToastName");
+  const elTier  = document.getElementById("tToastTier");
+  const elSheet = document.getElementById("trophySheet");
+  const elList  = document.getElementById("trophyList");
+  const elCount = document.getElementById("trophyCount");
+  const btnA    = document.getElementById("trophyBtn");
+  const btnB    = document.getElementById("overTrophyBtn");
+  const btnBack = document.getElementById("trophyBackBtn");
+
+  function save(){ STORE.set("stats", stats); STORE.set("trophies", unlocked); }
+  function has(id){ return unlocked.indexOf(id) !== -1; }
+  function count(){ let n = 0; for (const t of LIST) if (has(t.id)) n++; return n; }
+
+  function gvPost(action, payload){
+    try {
+      window.parent.postMessage({type:"gamevolt", action, gameId:GAME_ID, payload}, "*");
+    } catch(e){}
+  }
+
+  // Earned on another device? Then it is already persisted — never toast twice.
+  function elsewhere(id){
+    try {
+      return !!(window.GameVolt && GameVolt.achievements &&
+                GameVolt.achievements.isUnlocked && GameVolt.achievements.isUnlocked(id));
+    } catch(e){ return false; }
+  }
+
+  /* ---------- toast: a paper slip that flips up from the sheet ---------- */
+  let queue = [], showing = false;
+  function toast(t){ queue.push(t); if (!showing) popToast(); }
+  function popToast(){
+    if (!elToast || !queue.length){ showing = false; return; }
+    showing = true;
+    const t = queue.shift();
+    elIcon.textContent = t.icon;
+    elName.textContent = t.name;
+    elTier.textContent = t.tier;
+    elTier.className = "t-stamp " + t.tier;
+    elToast.hidden = false;
+    elToast.className = "t-toast show";
+    try { SND.trophy(t.tier); } catch(e){}
+    setTimeout(() => {
+      elToast.className = "t-toast";
+      setTimeout(popToast, 520);
+    }, 2700);
+  }
+
+  function unlock(t, silent){
+    if (has(t.id)) return;
+    unlocked.push(t.id);
+    save();
+    if (!elsewhere(t.id)){
+      if (window.GameVolt && GameVolt.achievements){
+        try { GameVolt.achievements.unlock(t.id); } catch(e){}   // the SDK prefixes the game id
+      }
+      gvPost("achievement", {id: t.id, name: t.name, tier: t.tier});
+      if (!silent) toast(t);
+    }
+    refresh();
+  }
+
+  // Newly earned trophies for the current stats. Platinum lands last, on its own.
+  function check(){
+    for (const t of LIST) if (t.cond && !has(t.id) && t.cond(stats)) unlock(t);
+    const plat = LIST[LIST.length-1];
+    if (!has(plat.id) && count() >= LIST.length-1) unlock(plat);
+  }
+
+  function ev(name, d){
+    d = d || {};
+    switch(name){
+      case "run":
+        stats.runs++;
+        if (d.daily) stats.dailyRuns++;
+        if (d.cp) stats.cpRuns++;
+        runStrokes = 0; runCp = !!d.cp;
+        break;
+      case "stroke": stats.strokes++; runStrokes++; break;
+      case "bounce": stats.bounces++; break;
+      case "ink":    stats.inkPx += d.px || 0; break;
+      case "block":  stats.blocks++; if (d.gold) stats.goldBlocks++; break;
+      case "orb":    stats.orbs++; break;
+      case "star":   stats.stars++; if (d.gold) stats.goldStars++; break;
+      case "bump":   stats.bumps++; break;
+      case "combo":  if (d.n > stats.bestCombo) stats.bestCombo = d.n; break;
+      case "end":
+        if (d.m > stats.bestM) stats.bestM = d.m;
+        if (d.pts > stats.bestPts) stats.bestPts = d.pts;
+        if (d.cause === "spike") stats.spikeDeaths++; else stats.falls++;
+        break;
+      case "daily-done":
+        stats.dailyDone++;
+        if (d.m > stats.bestM) stats.bestM = d.m;
+        if (d.pts > stats.bestPts) stats.bestPts = d.pts;
+        if (d.streak > stats.dailyStreak) stats.dailyStreak = d.streak;
+        if (d.rule && stats.rules.indexOf(d.rule) === -1) stats.rules.push(d.rule);
+        break;
+    }
+    check();
+    // hot events (ink, bounces) only live in memory — the run boundaries persist
+    if (name === "run" || name === "end" || name === "daily-done") save();
+  }
+
+  // Called every frame: the only trophy that needs to watch a run in progress.
+  function climb(m){
+    if (stats.thrifty || runCp || m < 200 || runStrokes > 8) return;
+    stats.thrifty = 1;
+    check();
+    save();
+  }
+
+  /* ---------- the collection page ---------- */
+  function render(){
+    if (!elList) return;
+    let html = "";
+    for (const tier of TIERS){
+      const of = LIST.filter(t => t.tier === tier);
+      const got = of.filter(t => has(t.id)).length;
+      html += '<div class="t-head ' + tier + '">' + tier + ' · ' + got + '/' + of.length + '</div>';
+      for (const t of of){
+        const own = has(t.id);
+        html += '<div class="t-row ' + tier + (own ? " got" : "") + '">' +
+                  '<div class="ic">' + (own ? t.icon : "○") + '</div>' +
+                  '<div><div class="nm">' + t.name + '</div>' +
+                       '<div class="ds">' + t.desc + '</div></div>' +
+                '</div>';
+      }
+    }
+    elList.innerHTML = html;
+  }
+
+  let backTo = null;
+  function open(from){
+    backTo = from || null;
+    if (backTo) backTo.hidden = true;
+    render();
+    if (elCount) elCount.textContent = count() + " / " + LIST.length;
+    if (elSheet) elSheet.hidden = false;
+  }
+  function close(){
+    if (elSheet) elSheet.hidden = true;
+    if (backTo) backTo.hidden = false;
+    backTo = null;
+  }
+
+  function refresh(){
+    const label = "Trophies · " + count() + " / " + LIST.length;
+    if (btnA) btnA.textContent = label;
+    if (btnB) btnB.textContent = label;
+    if (elSheet && !elSheet.hidden){
+      render();
+      if (elCount) elCount.textContent = count() + " / " + LIST.length;
+    }
+  }
+
+  /* ---------- GameVolt SDK (optional, portal only) ---------- */
+  function backfill(){
+    if (!window.GameVolt || !GameVolt.achievements || !GameVolt.achievements.getUnlockedIds) return;
+    try {
+      GameVolt.achievements.getUnlockedIds().then(ids => {
+        if (!ids || !ids.forEach) return;
+        let changed = false;
+        ids.forEach(id => {
+          if (unlocked.indexOf(id) === -1 && LIST.some(t => t.id === id)){ unlocked.push(id); changed = true; }
+        });
+        if (changed){ save(); refresh(); }
+      }).catch(() => {});
+    } catch(e){}
+  }
+
+  function initSDK(){
+    if (!window.GameVolt) return;
+    try {
+      if (GameVolt.init) GameVolt.init(GAME_ID);
+      GameVolt.save.registerMigration({
+        keys: ["black:stats", "black:trophies", "black:best", "black:bestP"],
+        merge: (local, cloud) => {
+          let ls = {}; const cs = cloud || {};
+          try { ls = JSON.parse(local["black:stats"] || "{}"); } catch(e){}
+          const merged = {};
+          for (const k in DEF) merged[k] = Math.max(ls[k] || 0, cs[k] || 0);
+          const rules = Array.isArray(cs.rules) ? cs.rules.slice() : [];
+          if (Array.isArray(ls.rules)) ls.rules.forEach(r => { if (rules.indexOf(r) === -1) rules.push(r); });
+          merged.rules = rules;
+          return merged;
+        },
+        getAchievements: local => {
+          try {
+            const ids = JSON.parse(local["black:trophies"] || "[]");
+            if (Array.isArray(ids)) return ids.map(id => ({id, unlocked_at: Date.now()}));
+          } catch(e){}
+          return [];
+        },
+        getScores: local => {
+          try {
+            const pts = JSON.parse(local["black:bestP"] || "0");
+            if (pts > 0) return [{score: pts, mode: "free"}];
+          } catch(e){}
+          return [];
+        }
+      });
+      GameVolt.auth.onStateChange(user => { if (user) backfill(); });
+      if (GameVolt.auth.getUser && GameVolt.auth.getUser()) backfill();
+    } catch(e){}
+  }
+
+  function init(){
+    if (btnA) btnA.addEventListener("click", () => open(startSheet));
+    if (btnB) btnB.addEventListener("click", () => open(overSheet));
+    if (btnBack) btnBack.addEventListener("click", close);
+    refresh();
+    initSDK();
+  }
+
+  return {LIST, ev, climb, open, close, init, refresh, save, count,
+          stats: () => stats};
+})();
+
 function yesterdaySeed(){
   const d = new Date(); d.setDate(d.getDate() - 1);
   return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
@@ -308,6 +674,7 @@ let mode = "free", dailyRule = null, dailySeed = 0, finished = false;
 let lastRun = {daily:false, m:0, score:0, done:false};
 let tut = 0, tutT = 0, tutY0 = 0;   // handledning: 1 = väntar på första strecket, 2 = bläckhint
 let dying = 0, warnArmed = true;    // dödssekvens: nedräkning i realtid + varningston
+let deathCause = "fall";            // "fall" | "spike" — vilken död rundan slutade med
 let MOD = {regen:1, g:1, starMul:1, noSpikes:false, windy:false, narrow:0};
 let bandRand = Math.random;
 function grnd(a,b){ return a + bandRand()*(b-a); }
@@ -422,6 +789,13 @@ const SND = (() => {
     orb(){ tone("sine", 300, 620, 0.12, 0.26); },
     star(){ tone("triangle", 1046.5, 0, 0.07, 0.13); tone("triangle", 1568, 0, 0.08, 0.11, 0.055); },
     level(){ [523,659,784].forEach((f,i)=>tone("triangle", f, 0, 0.16, 0.22, i*0.09)); },
+    trophy(tier){
+      const hi = tier === "gold" || tier === "platinum";
+      (hi ? [523.25,659.25,784,1046.5] : [523.25,784]).forEach((f,i) => {
+        tone("sine", f, 0, 0.5, 0.16, i*0.085);
+        tone("triangle", f*2, 0, 0.18, 0.05, i*0.085+0.02);
+      });
+    },
     over(){ tone("triangle", 320, 70, 0.7, 0.3); },
     tick(dt, lvl, isDrawing, playing){
       if (dead || !ac || !musicFilter) return;
@@ -704,6 +1078,7 @@ function addScore(base, x, y){
   score += pts;
   floats.push({x, y, txt: "+"+pts, t: 0, life: 0.9, red: combo > 1});
   combo++;
+  TROPHIES.ev("combo", {n: combo});
 }
 
 /* ---------- uppdatering ---------- */
@@ -775,6 +1150,7 @@ function step(dt){
           reflect(hit.nx, hit.ny, REST, TUNE.kick);
           st.alive = false; st.flash = 1;
           SND.stroke();
+          TROPHIES.ev("bounce");
           burst(hit.cx, hit.cy, 10, C.ink, 260);
           shake = Math.min(shake+3, 8);
         }
@@ -795,6 +1171,7 @@ function step(dt){
         SND.block();
         if (r.gold) SND.star();
         addScore(r.gold ? 400 : 100, r.x+r.w/2, r.y);
+        TROPHIES.ev("block", {gold: !!r.gold});
         burst(r.x+r.w/2, r.y+r.h/2, r.gold ? 22 : 14, r.gold ? C.orange : C.green, 220);
         shake = Math.min(shake+4, 9);
       } else if (vnImp < -120){
@@ -837,6 +1214,7 @@ function step(dt){
           b.lit = 0.35;
           SND.bumper(combo);
           addScore(25, b.x, b.y - b.r - 8);
+          TROPHIES.ev("bump");
           burst(ball.x, ball.y, 8, C.orange, 240);
           shake = Math.min(shake+3, 8);
         }
@@ -850,6 +1228,7 @@ function step(dt){
       pushOut(hres);
       if (dying === 0){
         dying = 1.15;
+        deathCause = "spike";
         endDraw();
         sp.lit = 0.6;
         SND.spike();
@@ -871,6 +1250,7 @@ function step(dt){
       addInk(120);
       SND.orb();
       addScore(50, o.x, o.y - 18);
+      TROPHIES.ev("orb");
       burst(o.x, o.y, 16, C.ink, 280);
       orbs.splice(i,1);
     }
@@ -886,6 +1266,7 @@ function step(dt){
     }
     if (Math.hypot(ball.x-st.x, ball.y-st.y) < st.r + ball.r){
       addScore(st.val * MOD.starMul, st.x, st.y - 14);
+      TROPHIES.ev("star", {gold: !!st.gold});
       if (st.gold){ SND.level(); burst(st.x, st.y, 26, C.orange, 320); shake = Math.min(shake+5, 10); }
       else { SND.star(); burst(st.x, st.y, 12, C.ink, 240); }
       stars.splice(i,1);
@@ -924,6 +1305,7 @@ function step(dt){
   if (ball.y - camTop < H*0.22) camTop = ball.y - H*0.22;
 
   meters = Math.max(meters, (startYRef - ball.y)/MPX);
+  TROPHIES.climb(meters);
   if (mode === "daily" && !finished && meters >= DAILY_GOAL){ finishDaily(); return; }
   const lv = Math.floor(meters/100);
   if (lv > level){
@@ -935,6 +1317,7 @@ function step(dt){
     floats.push({x: ball.x, y: ball.y - 34, txt: "+500", t: 0, life: 1.1});
     levelFlash = 1;
     burst(ball.x, ball.y, 22, C.red, 300);
+    TROPHIES.save();
   }
   if (levelFlash > 0) levelFlash = Math.max(0, levelFlash - dt*0.8);
   while (genY > camTop - 900) generateBand();
@@ -958,6 +1341,7 @@ function step(dt){
 
   if (dying === 0 && ball.y > camTop + H + 20){
     dying = 1.15;          // sekunder realtid av slow motion-fall
+    deathCause = "fall";
     endDraw();
     SND.over();
     shake = Math.min(shake + 6, 10);
@@ -971,6 +1355,7 @@ function gameOver(){
   bestP = Math.max(bestP, score);
   STORE.set("best", best);
   STORE.set("bestP", bestP);
+  TROPHIES.ev("end", {m: Math.floor(meters), pts: score, cause: deathCause});
   overEyebrow.textContent = "the ball fell";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
   if (mode === "daily"){
@@ -1003,6 +1388,8 @@ function finishDaily(){
   STORE.set("bestP", bestP);
   saveDaily(true);
   const streak = bumpStreak();
+  TROPHIES.ev("daily-done", {m: DAILY_GOAL, pts: score,
+                             rule: dailyRule ? dailyRule.name : "", streak});
   refreshDailyInfo();
   overEyebrow.textContent = "made it!";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
@@ -1034,7 +1421,10 @@ cv.addEventListener("pointerdown", e => {
 
 cv.addEventListener("pointermove", e => {
   if (state !== "play" || !drawing) return;
-  if (!drawing.alive){ drawing = null; SND.setScratch(false); return; }   // bollen hann studsa på det
+  if (!drawing.alive){                                                     // bollen hann studsa på det
+    if (drawing.pts.length >= 2) TROPHIES.ev("stroke");
+    drawing = null; SND.setScratch(false); return;
+  }
   const p = toWorld(e);
   p.x = Math.max(MARGIN+2, Math.min(W-RWALL-2, p.x));
   const last = drawing.pts[drawing.pts.length-1];
@@ -1042,12 +1432,14 @@ cv.addEventListener("pointermove", e => {
   if (d < 5) return;
   if (ink < d){ endDraw(); return; }        // bläcket tog slut mitt i draget
   ink -= d;
+  TROPHIES.ev("ink", {px: d});
   drawing.pts.push(p);
   if (drawing.pts.length > 240) endDraw();
 });
 
 function endDraw(){
   SND.setScratch(false);
+  if (drawing && drawing.pts.length >= 2) TROPHIES.ev("stroke");
   if (drawing && drawing.pts.length < 2) drawing.alive = false;
   if (tut === 1 && drawing && drawing.pts.length >= 2){
     tut = 2; tutT = 0;
@@ -1489,6 +1881,7 @@ function pause(){
   endDraw();
   SND.setScratch(false);
   state = "paused";
+  TROPHIES.save();
   pauseSheet.hidden = false;
 }
 function resumeGame(){
@@ -1497,6 +1890,7 @@ function resumeGame(){
   state = "play";
 }
 function quitToStart(){
+  TROPHIES.close();
   pauseSheet.hidden = true;
   overSheet.hidden = true;
   pauseBtn.hidden = true;
@@ -1510,6 +1904,7 @@ function quitToStart(){
 }
 
 function play(opt){
+  TROPHIES.close();
   startSheet.hidden = true;
   overSheet.hidden = true;
   pauseSheet.hidden = true;
@@ -1519,6 +1914,7 @@ function play(opt){
   if (opt.daily) tunePanel.hidden = true;
   resize();
   reset(opt.cp === true);
+  TROPHIES.ev("run", {daily: mode === "daily", cp: opt.cp === true});
   state = "play";
   SND.ensure();
 }
@@ -1570,6 +1966,7 @@ shareBtn.addEventListener("click", () => {
 });
 
 refreshDailyInfo();
+TROPHIES.init();
 if (!STORE.persistent()) document.getElementById("saveNote").hidden = false;
 if (checkpoint > 0){
   resumeBtn.hidden = false;

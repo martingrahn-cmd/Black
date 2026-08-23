@@ -25,12 +25,25 @@ Open `index.html` in a mobile browser (built for portrait + touch, works with a 
 
 Records, checkpoints and streak persist in `localStorage`.
 
+## Trophies
+
+31 trophies on the GameVolt ladder — 15 bronze, 10 silver, 5 gold and one platinum for
+the other 30. They live on a collection page reachable from both the start screen and the
+game over screen, and every unlock drops a stamped paper slip in at the top of the sheet.
+
+On GameVolt.io they also follow the account: the game calls `GameVolt.achievements.unlock()`
+when the SDK is there, back-fills trophies earned on another device at login, and registers
+the localStorage → cloud migration. Without the SDK — standalone, or on another portal —
+everything still works straight out of `localStorage`.
+
+`sql/achievements.sql` holds the matching 31 `achievement_defs` rows for the portal database.
+
 ## Development
 
 The in-game tuning button exposes live physics values (gravity, kick, bounce, ink, slow-mo).
 
-Headless test of the full game loop (load, start, drawing, daily, pause) against strict
-DOM/Canvas/WebAudio stubs:
+Headless test of the full game loop (load, start, drawing, daily, pause, trophies) against
+strict DOM/Canvas/WebAudio stubs:
 
 ```bash
 ./tests/run.sh
