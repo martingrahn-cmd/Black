@@ -1,35 +1,36 @@
-# BLÄCK ✒️
+# INK ✒️
 
-Ett vertikalt endless-spel — en blandning av Breakout och flipper där du **ritar flippern med fingret**.
-Bollen studsar en gång på varje streck, sen är det förbrukat. Bläcket i marginalen bestämmer hur långt
-du får rita. Klättra, kedja kombos och jaga poäng.
+A vertical endless game — a mix of Breakout and pinball where you **draw the flipper with your finger**.
+The ball bounces once off each stroke, then it's spent. The ink in the margin decides how much you can
+draw. Climb, chain combos, chase points.
 
-Allt i **en enda HTML-fil**: fysik, procedurell bangenerering, syntetiserat ljud och genererad musik
-(Web Audio, inga assets), ritat i canvas med rutat papper och kulspetsestetik.
+Everything in **a single HTML file**: physics, procedural level generation, synthesized sound effects and
+generative music (Web Audio, zero assets), rendered on canvas in a squared-paper, ballpoint-pen aesthetic.
 
-## Spela
+## Play
 
-Öppna `index.html` i en mobilwebbläsare (byggt för porträttläge och touch, funkar med mus).
+Open `index.html` in a mobile browser (built for portrait + touch, works with a mouse).
 
-- **Rita streck** — bollen studsar, strecket förbrukas
-- **Bläcket** i vänstermarginalen är din resurs; plumpar och krossade block fyller på
-- **Rött dödar** — taggar är game over
-- **Kombo**: allt bollen träffar utan att du ritar nytt är värt mer
-- Tiden går långsammare medan du ritar
+- **Draw strokes** — the ball bounces, the stroke is spent
+- **Ink** in the left margin is your resource; ink blots and broken blocks refill it
+- **Red kills** — spikes are game over
+- **Combo**: everything the ball hits without a new stroke is worth more
+- Time slows down while you draw
 
-## Lägen
+## Modes
 
-- **Klättra fritt** — endless med checkpoints var 100:e meter och något nytt upplåst på varje nivå t.o.m. 10
-- **Dagens utmaning** — seedad bana ur dagens datum (samma för alla), 500 m till mål, en dagsregel
-  (t.ex. *Torrt bläck*, *Blåsigt*), svit-räknare och delbart resultat i Wordle-stil
+- **Free climb** — endless, with checkpoints every 100 m and something new unlocked on every level up to 10
+- **Daily challenge** — a course seeded from today's date (same for everyone), 500 m to the finish line,
+  one daily rule (e.g. *Dry ink*, *Windy*), streak counter and a Wordle-style shareable result
 
-Rekord, checkpoints och svit sparas i `localStorage`.
+Records, checkpoints and streak persist in `localStorage`.
 
-## Utveckling
+## Development
 
-Reglage-knappen i spelet exponerar fysikvärdena live (gravitation, knuff, studs, bläck, tidsbroms).
+The in-game tuning button exposes live physics values (gravity, kick, bounce, ink, slow-mo).
 
-Headless-test av hela spelloopen (laddning, start, ritning, daily, paus) mot strikta DOM/Canvas/WebAudio-stubbar:
+Headless test of the full game loop (load, start, drawing, daily, pause) against strict
+DOM/Canvas/WebAudio stubs:
 
 ```bash
 ./tests/run.sh
@@ -37,4 +38,4 @@ Headless-test av hela spelloopen (laddning, start, ritning, daily, paus) mot str
 
 ## Status
 
-Spelbar prototyp under aktiv utveckling för [GameVolt.io](https://gamevolt.io).
+Playable prototype in active development for [GameVolt.io](https://gamevolt.io).

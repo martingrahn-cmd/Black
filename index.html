@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="sv">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<title>BLÄCK — prototyp</title>
+<title>INK — prototype</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -119,61 +119,61 @@
 <div id="wrap">
   <canvas id="c"></canvas>
 
-  <button class="tuneBtn" id="tuneBtn" aria-label="Visa reglage">reglage</button>
-  <button class="tuneBtn snd" id="sndBtn" aria-label="Ljud av eller på">ljud: på</button>
-  <button class="tuneBtn mus" id="musBtn" aria-label="Musik av eller på">musik: på</button>
-  <button class="tuneBtn pausebtn" id="pauseBtn" aria-label="Pausa spelet" hidden>paus</button>
+  <button class="tuneBtn" id="tuneBtn" aria-label="Show tuning">tuning</button>
+  <button class="tuneBtn snd" id="sndBtn" aria-label="Sound on or off">sound: on</button>
+  <button class="tuneBtn mus" id="musBtn" aria-label="Music on or off">music: on</button>
+  <button class="tuneBtn pausebtn" id="pauseBtn" aria-label="Pause the game" hidden>pause</button>
   <div class="tune" id="tunePanel" hidden>
-    <label>Gravitation <output id="oG">600</output>
+    <label>Gravity <output id="oG">600</output>
       <input type="range" id="rG" min="250" max="1300" step="25" value="600"></label>
-    <label>Knuff i strecket <output id="oK">320</output>
+    <label>Stroke kick <output id="oK">320</output>
       <input type="range" id="rK" min="150" max="520" step="10" value="320"></label>
-    <label>Bläckpåfyllning <output id="oR">115</output> px/s
+    <label>Ink refill <output id="oR">115</output> px/s
       <input type="range" id="rR" min="20" max="220" step="5" value="115"></label>
-    <label>Studs i banan <output id="oB">62</output>%
+    <label>World bounce <output id="oB">62</output>%
       <input type="range" id="rB" min="25" max="100" step="2" value="62"></label>
-    <label>Knuff i studsknappar <output id="oBK">40</output>
+    <label>Bumper kick <output id="oBK">40</output>
       <input type="range" id="rBK" min="0" max="300" step="10" value="40"></label>
-    <label>Tidsbroms <output id="oS">34</output>%
+    <label>Slow-mo <output id="oS">34</output>%
       <input type="range" id="rS" min="10" max="100" step="2" value="34"></label>
   </div>
 
   <div class="sheet" id="startSheet">
-    <div class="eyebrow">prototyp 01</div>
-    <h1>BLÄCK</h1>
-    <div class="tag">rita dig uppåt</div>
+    <div class="eyebrow">prototype 01</div>
+    <h1>INK</h1>
+    <div class="tag">draw your way up</div>
     <p class="rules">
-      Rita streck med fingret — bollen studsar på dem, <b>ett studs per streck</b>.
-      Samla bläck, undvik rött, och kedja träffar utan nya streck för <b>kombo</b>.
-      Resten lär du dig på vägen.
+      Draw strokes with your finger — the ball bounces off them, <b>one bounce per stroke</b>.
+      Collect ink, avoid red, and chain hits without new strokes to build <b>combo</b>.
+      You'll learn the rest on the way.
     </p>
     <div class="legend">
-      <span class="k brk">krossbart</span>
-      <span class="k sol">massivt</span>
-      <span class="k spk">taggar</span>
-      <span class="k inkd">bläck</span>
+      <span class="k brk">breakable</span>
+      <span class="k sol">solid</span>
+      <span class="k spk">spikes</span>
+      <span class="k inkd">ink</span>
     </div>
-    <button class="btn" id="startBtn">Klättra fritt</button>
-    <button class="btn" id="resumeBtn" hidden>Fortsätt</button>
-    <button class="btn" id="dailyBtn">Dagens utmaning · 500 m</button>
+    <button class="btn" id="startBtn">Free climb</button>
+    <button class="btn" id="resumeBtn" hidden>Continue</button>
+    <button class="btn" id="dailyBtn">Daily challenge · 500 m</button>
     <div class="daily-info" id="dailyInfo"></div>
-    <div class="daily-info" id="saveNote" hidden>obs: rekord sparas inte i den här förhandsvisningen</div>
+    <div class="daily-info" id="saveNote" hidden>note: records are not saved in this preview</div>
   </div>
 
   <div class="sheet" id="pauseSheet" hidden>
-    <div class="eyebrow">pausat</div>
-    <div class="tag">bollen väntar</div>
-    <button class="btn" id="resumePlayBtn">Fortsätt</button>
-    <button class="btn ghost" id="quitBtn">Till startsidan</button>
+    <div class="eyebrow">paused</div>
+    <div class="tag">the ball is waiting</div>
+    <button class="btn" id="resumePlayBtn">Resume</button>
+    <button class="btn ghost" id="quitBtn">Back to start</button>
   </div>
 
   <div class="sheet" id="overSheet" hidden>
-    <div class="eyebrow" id="overEyebrow">bollen ramlade ner</div>
+    <div class="eyebrow" id="overEyebrow">the ball fell</div>
     <div class="score" id="finalScore">0 m</div>
-    <div class="best" id="bestScore">BÄST 0 M</div>
-    <button class="btn" id="shareBtn" hidden>Kopiera resultat</button>
-    <button class="btn" id="contBtn">Fortsätt</button>
-    <button class="btn ghost" id="againBtn">Från början</button>
+    <div class="best" id="bestScore">BEST 0 M</div>
+    <button class="btn" id="shareBtn" hidden>Copy result</button>
+    <button class="btn" id="contBtn">Continue</button>
+    <button class="btn ghost" id="againBtn">From the start</button>
   </div>
 </div>
 
@@ -217,8 +217,8 @@ const VMAX   = 900;
 const TUNE   = { g: 600, kick: 320, slow: 0.34, bounce: 0.62, bkick: 40, regen: 115 };  // live-reglage
 const BAND   = 250;
 const MPX    = 19;          // pixlar per meter — styr hur fort höjden räknas
-const UNLOCKS = {2:"taggar", 3:"stjärnor", 4:"vandrande knappar", 5:"guldblock",
-                 6:"grindar", 7:"fläktar", 8:"rörliga stjärnor", 9:"magneter & dubbelgrindar", 10:"guldstjärnan"};         // avstånd mellan genererade band
+const UNLOCKS = {2:"spikes", 3:"stars", 4:"roaming bumpers", 5:"gold blocks",
+                 6:"gates", 7:"fans", 8:"moving stars", 9:"magnets & double gates", 10:"the gold star"};         // avstånd mellan genererade band
 const INK_MAX = 360;        // bläck mäts i pixlar streck
 // påfyllningen är generös nere vid marken och stramas åt med höjden
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -238,11 +238,11 @@ function todaySeed(){
   return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
 }
 const RULES = [
-  {name:"Torrt bläck",  mod:{regen:0.5}},
-  {name:"Stjärnfall",   mod:{starMul:2}},
-  {name:"Blåsigt",      mod:{windy:true}},
-  {name:"Tungt papper", mod:{g:1.25}},
-  {name:"Rent papper",  mod:{noSpikes:true, narrow:26}}
+  {name:"Dry ink",     mod:{regen:0.5}},
+  {name:"Starfall",    mod:{starMul:2}},
+  {name:"Windy",       mod:{windy:true}},
+  {name:"Heavy paper", mod:{g:1.25}},
+  {name:"Clean paper", mod:{noSpikes:true, narrow:26}}
 ];
 function ruleFor(seed){ return RULES[Math.floor(mulberry32(seed ^ 0x5bf03635)() * RULES.length)]; }
 
@@ -293,14 +293,14 @@ function bumpStreak(){
 }
 function refreshDailyInfo(){
   const seed = todaySeed();
-  const ds = new Date().toLocaleDateString("sv-SE", {day:"numeric", month:"short"});
-  let txt = ds + " · dagens regel: " + ruleFor(seed).name;
+  const ds = new Date().toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+  let txt = ds + " · today\u2019s rule: " + ruleFor(seed).name;
   const rec = STORE.get("daily:" + seed, null);
-  if (rec && rec.done) txt += " · avklarad: " + rec.score.toLocaleString("sv-SE") + " p";
-  else if (rec) txt += " · bästa försök: " + rec.score.toLocaleString("sv-SE") + " p";
+  if (rec && rec.done) txt += " · cleared: " + rec.score.toLocaleString("en-US") + " pts";
+  else if (rec) txt += " · best attempt: " + rec.score.toLocaleString("en-US") + " pts";
   const info = STORE.get("dailyDone", {seed:0, streak:0});
   if (info.streak > 1 && (info.seed === seed || info.seed === yesterdaySeed())){
-    txt += " · svit: " + info.streak + " dagar";
+    txt += " · streak: " + info.streak + " days";
   }
   dailyInfo.textContent = txt;
 }
@@ -312,11 +312,11 @@ let MOD = {regen:1, g:1, starMul:1, noSpikes:false, windy:false, narrow:0};
 let bandRand = Math.random;
 function grnd(a,b){ return a + bandRand()*(b-a); }
 function shareText(){
-  const ds = new Date().toLocaleDateString("sv-SE", {day:"numeric", month:"short"});
-  return "BLÄCK · dagens utmaning " + ds +
-    "\n✒️ " + lastRun.score.toLocaleString("sv-SE") + " p · " + lastRun.m + "/" + DAILY_GOAL + " m" +
-    (lastRun.done ? " · I MÅL" : "") +
-    "\nregel: " + (dailyRule ? dailyRule.name : "–");
+  const ds = new Date().toLocaleDateString("en-GB", {day:"numeric", month:"short"});
+  return "INK · daily challenge " + ds +
+    "\n✒️ " + lastRun.score.toLocaleString("en-US") + " pts · " + lastRun.m + "/" + DAILY_GOAL + " m" +
+    (lastRun.done ? " · FINISHED" : "") +
+    "\nrule: " + (dailyRule ? dailyRule.name : "–");
 }
 function fallbackCopy(txt, done){
   try{
@@ -971,21 +971,21 @@ function gameOver(){
   bestP = Math.max(bestP, score);
   STORE.set("best", best);
   STORE.set("bestP", bestP);
-  overEyebrow.textContent = "bollen ramlade ner";
-  finalScore.textContent = score.toLocaleString("sv-SE") + " p";
+  overEyebrow.textContent = "the ball fell";
+  finalScore.textContent = score.toLocaleString("en-US") + " pts";
   if (mode === "daily"){
-    bestScore.textContent = Math.floor(meters) + " / " + DAILY_GOAL + " M · REGEL: " + (dailyRule ? dailyRule.name.toUpperCase() : "–");
+    bestScore.textContent = Math.floor(meters) + " / " + DAILY_GOAL + " M · RULE: " + (dailyRule ? dailyRule.name.toUpperCase() : "–");
     lastRun = {daily:true, m: Math.floor(meters), score: score, done:false};
     saveDaily(false);
     refreshDailyInfo();
     contBtn.hidden = true;
-    shareBtn.hidden = false; shareBtn.textContent = "Kopiera resultat";
+    shareBtn.hidden = false; shareBtn.textContent = "Copy result";
   } else {
-    bestScore.textContent = Math.floor(meters) + " M · NIVÅ " + (level+1) + " · BÄST " + bestP.toLocaleString("sv-SE") + " P";
+    bestScore.textContent = Math.floor(meters) + " M · LEVEL " + (level+1) + " · BEST " + bestP.toLocaleString("en-US") + " PTS";
     shareBtn.hidden = true;
     if (checkpoint > 0){
       contBtn.hidden = false;
-      contBtn.textContent = "Fortsätt från " + (checkpoint*100) + " m";
+      contBtn.textContent = "Continue from " + (checkpoint*100) + " m";
     } else {
       contBtn.hidden = true;
     }
@@ -1004,12 +1004,12 @@ function finishDaily(){
   saveDaily(true);
   const streak = bumpStreak();
   refreshDailyInfo();
-  overEyebrow.textContent = "i mål!";
-  finalScore.textContent = score.toLocaleString("sv-SE") + " p";
-  bestScore.textContent = "SVIT: " + streak + (streak === 1 ? " DAG" : " DAGAR") + " · REGEL: " + (dailyRule ? dailyRule.name.toUpperCase() : "–");
+  overEyebrow.textContent = "made it!";
+  finalScore.textContent = score.toLocaleString("en-US") + " pts";
+  bestScore.textContent = "STREAK: " + streak + (streak === 1 ? " DAY" : " DAYS") + " · RULE: " + (dailyRule ? dailyRule.name.toUpperCase() : "–");
   lastRun = {daily:true, m: DAILY_GOAL, score: score, done:true};
   contBtn.hidden = true;
-  shareBtn.hidden = false; shareBtn.textContent = "Kopiera resultat";
+  shareBtn.hidden = false; shareBtn.textContent = "Copy result";
   pauseBtn.hidden = true;
   overSheet.hidden = false;
 }
@@ -1125,7 +1125,7 @@ function drawWorld(){
       ctx.font = "700 24px 'Caveat', cursive";
       ctx.textAlign = "left"; ctx.textBaseline = "bottom";
       ctx.save(); ctx.translate(MARGIN+10, ly-4); ctx.rotate(-0.03);
-      ctx.fillText("nivå " + (n+1) + " — " + (n*100) + " m", 0, 0);
+      ctx.fillText("level " + (n+1) + " — " + (n*100) + " m", 0, 0);
       ctx.restore();
       ctx.globalAlpha = 1;
     }
@@ -1143,7 +1143,7 @@ function drawWorld(){
       ctx.font = "700 32px 'Caveat', cursive";
       ctx.textAlign = "left"; ctx.textBaseline = "bottom";
       ctx.save(); ctx.translate(MARGIN+10, gy-12); ctx.rotate(-0.03);
-      ctx.fillText("MÅL", 0, 0);
+      ctx.fillText("FINISH", 0, 0);
       ctx.restore();
     }
   }
@@ -1378,7 +1378,7 @@ function drawWorld(){
     ctx.font = "700 27px 'Caveat', cursive";
     ctx.textAlign = "center"; ctx.textBaseline = "top";
     ctx.save(); ctx.translate(ball.x, gy+34); ctx.rotate(-0.03);
-    ctx.fillText("rita ett streck under bollen", 0, 0);
+    ctx.fillText("draw a stroke under the ball", 0, 0);
     ctx.restore();
   }
 
@@ -1415,7 +1415,7 @@ function hud(){
   ctx.fillStyle = ink/INK_MAX > 0.55 ? C.paper : C.ink;
   ctx.font = "500 9px 'IBM Plex Mono', monospace";
   ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  ctx.fillText("BLÄCK", 0, 0);
+  ctx.fillText("INK", 0, 0);
   ctx.restore();
 
   if (tut === 2){
@@ -1423,7 +1423,7 @@ function hud(){
     ctx.fillStyle = C.ink;
     ctx.font = "700 24px 'Caveat', cursive";
     ctx.textAlign = "left"; ctx.textBaseline = "middle";
-    ctx.fillText("← ditt bläck", MARGIN + 10, H*0.5);
+    ctx.fillText("← your ink", MARGIN + 10, H*0.5);
     ctx.globalAlpha = 1;
   }
 
@@ -1431,7 +1431,7 @@ function hud(){
   ctx.fillStyle = C.graphite;
   ctx.font = "600 15px 'IBM Plex Mono', monospace";
   ctx.textAlign = "left"; ctx.textBaseline = "top";
-  ctx.fillText(score.toLocaleString("sv-SE") + " p", MARGIN+12, 16);
+  ctx.fillText(score.toLocaleString("en-US") + " pts", MARGIN+12, 16);
   if (combo > 1){
     ctx.fillStyle = C.red;
     ctx.font = "700 27px 'Caveat', cursive";
@@ -1445,7 +1445,7 @@ function hud(){
   ctx.fillText(mode === "daily" ? (Math.floor(meters) + " / " + DAILY_GOAL + " m") : (Math.floor(meters) + " m"), W-RWALL-10, 16);
   ctx.fillStyle = C.pale;
   ctx.font = "500 11px 'IBM Plex Mono', monospace";
-  ctx.fillText("NIVÅ " + (level+1), W-RWALL-10, 38);
+  ctx.fillText("LEVEL " + (level+1), W-RWALL-10, 38);
 
   if (levelFlash > 0){
     ctx.globalAlpha = Math.min(1, levelFlash*1.6);
@@ -1453,10 +1453,10 @@ function hud(){
     ctx.font = "700 60px 'Caveat', cursive";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
     ctx.save(); ctx.translate(W/2, H*0.3); ctx.rotate(-0.05);
-    ctx.fillText("nivå " + (level+1), 0, 0);
+    ctx.fillText("level " + (level+1), 0, 0);
     if (UNLOCKS[level+1]){
       ctx.font = "700 27px 'Caveat', cursive";
-      ctx.fillText("nytt: " + UNLOCKS[level+1], 0, 46);
+      ctx.fillText("new: " + UNLOCKS[level+1], 0, 46);
     }
     ctx.restore();
     ctx.globalAlpha = 1;
@@ -1503,7 +1503,7 @@ function quitToStart(){
   state = "start";
   if (checkpoint > 0){
     resumeBtn.hidden = false;
-    resumeBtn.textContent = "Fortsätt från " + (checkpoint*100) + " m";
+    resumeBtn.textContent = "Continue from " + (checkpoint*100) + " m";
   }
   refreshDailyInfo();
   startSheet.hidden = false;
@@ -1525,12 +1525,12 @@ function play(opt){
 const sndBtn = document.getElementById("sndBtn");
 sndBtn.addEventListener("click", () => {
   SND.ensure();
-  sndBtn.textContent = "ljud: " + (SND.toggle() ? "på" : "av");
+  sndBtn.textContent = "sound: " + (SND.toggle() ? "on" : "off");
 });
 const musBtn = document.getElementById("musBtn");
 musBtn.addEventListener("click", () => {
   SND.ensure();
-  musBtn.textContent = "musik: " + (SND.toggleMusic() ? "på" : "av");
+  musBtn.textContent = "music: " + (SND.toggleMusic() ? "on" : "off");
 });
 const tuneBtn = document.getElementById("tuneBtn");
 const tunePanel = document.getElementById("tunePanel");
@@ -1561,7 +1561,7 @@ document.addEventListener("visibilitychange", () => { if (document.hidden) pause
 window.addEventListener("blur", () => pause());
 shareBtn.addEventListener("click", () => {
   const txt = shareText();
-  const done = () => { shareBtn.textContent = "Kopierat!"; };
+  const done = () => { shareBtn.textContent = "Copied!"; };
   if (navigator.clipboard && navigator.clipboard.writeText){
     navigator.clipboard.writeText(txt).then(done).catch(() => fallbackCopy(txt, done));
   } else {
@@ -1573,7 +1573,7 @@ refreshDailyInfo();
 if (!STORE.persistent()) document.getElementById("saveNote").hidden = false;
 if (checkpoint > 0){
   resumeBtn.hidden = false;
-  resumeBtn.textContent = "Fortsätt från " + (checkpoint*100) + " m";
+  resumeBtn.textContent = "Continue from " + (checkpoint*100) + " m";
 }
 
 resize();
