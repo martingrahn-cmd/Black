@@ -362,7 +362,7 @@ const TROPHIES = (() => {
     {id:"ping",             icon:"🔶", name:"Ping",             desc:"Score off 20 bumpers",               tier:"bronze", cond:s => s.bumps >= 20},
     {id:"stargazer",        icon:"⭐", name:"Stargazer",        desc:"Collect 25 stars",                   tier:"bronze", cond:s => s.stars >= 25},
     {id:"chain-of-thought", icon:"🔗", name:"Chain of Thought", desc:"Reach a ×5 combo",                   tier:"bronze", cond:s => s.bestCombo >= 5},
-    {id:"well-marked",      icon:"🧮", name:"Well Marked",      desc:"Score 5,000 points in one run",      tier:"bronze", cond:s => s.bestPts >= 5000},
+    {id:"well-marked",      icon:"🧮", name:"Well Marked",      desc:"Score 2,500 points in one run",      tier:"bronze", cond:s => s.bestPts >= 2500},
     {id:"warm-pen",         icon:"🖊️", name:"Warm Pen",         desc:"Draw 250 m of line in total",        tier:"bronze", cond:s => s.inkPx >= 250*M},
     {id:"point-taken",      icon:"📌", name:"Point Taken",      desc:"Find out what the red spikes do",    tier:"bronze", cond:s => s.spikeDeaths >= 1},
     {id:"bookmark",         icon:"🔖", name:"Bookmark",         desc:"Continue a climb from a checkpoint", tier:"bronze", cond:s => s.cpRuns >= 1},
@@ -371,7 +371,7 @@ const TROPHIES = (() => {
     /* ---- silver (10): deliberate effort ---- */
     {id:"page-four",        icon:"📚", name:"Page Four",        desc:"Climb 400 m in one run",             tier:"silver", cond:s => s.bestM >= 400},
     {id:"train-of-thought", icon:"🚂", name:"Train of Thought", desc:"Reach a ×12 combo",                  tier:"silver", cond:s => s.bestCombo >= 12},
-    {id:"straight-as",      icon:"🅰️", name:"Straight A's",     desc:"Score 25,000 points in one run",     tier:"silver", cond:s => s.bestPts >= 25000},
+    {id:"straight-as",      icon:"🅰️", name:"Straight A's",     desc:"Score 10,000 points in one run",     tier:"silver", cond:s => s.bestPts >= 10000},
     {id:"gilded",           icon:"🟨", name:"Gilded",           desc:"Break 10 gold blocks",               tier:"silver", cond:s => s.goldBlocks >= 10},
     {id:"star-pupil",       icon:"🌟", name:"Star Pupil",       desc:"Collect 150 stars",                  tier:"silver", cond:s => s.stars >= 150},
     {id:"kilometre-of-ink", icon:"🖋️", name:"A Kilometre of Ink",desc:"Draw 1 km of line in total",        tier:"silver", cond:s => s.inkPx >= 1000*M},
@@ -383,7 +383,7 @@ const TROPHIES = (() => {
     {id:"magnetic-north",   icon:"🧲", name:"Magnetic North",   desc:"Climb 800 m in one run",             tier:"gold",   cond:s => s.bestM >= 800},
     {id:"gold-star",        icon:"🏅", name:"The Gold Star",    desc:"Catch the big gold star",            tier:"gold",   cond:s => s.goldStars >= 1},
     {id:"runaway-chain",    icon:"⛓️", name:"Runaway Chain",    desc:"Reach a ×25 combo",                  tier:"gold",   cond:s => s.bestCombo >= 25},
-    {id:"six-figures",      icon:"💯", name:"Six Figures",      desc:"Score 100,000 points in one run",    tier:"gold",   cond:s => s.bestPts >= 100000},
+    {id:"top-of-the-class", icon:"🏆", name:"Top of the Class", desc:"Score 25,000 points in one run",     tier:"gold",   cond:s => s.bestPts >= 25000},
     {id:"full-marks",       icon:"🎓", name:"Full Marks",       desc:"Clear the daily under all five rules",tier:"gold",  cond:s => s.rules.length >= 5},
     /* ---- platinum (1): the completionist ---- */
     {id:"ink-master",       icon:"👑", name:"INK Master",       desc:"Unlock the other 30 trophies",       tier:"platinum", cond:null}
