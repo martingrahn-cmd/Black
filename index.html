@@ -380,9 +380,9 @@ const TROPHIES = (() => {
     {id:"frugal-hand",      icon:"🤏", name:"Frugal Hand",      desc:"Reach 200 m on 8 strokes or fewer",  tier:"silver", cond:s => s.thrifty >= 1},
     {id:"notebook-filled",  icon:"📓", name:"Notebook Filled",  desc:"Play 50 runs",                       tier:"silver", cond:s => s.runs >= 50},
     /* ---- gold (5): the deep end of the notebook ---- */
-    {id:"magnetic-north",   icon:"🧲", name:"Magnetic North",   desc:"Climb 800 m in one run",             tier:"gold",   cond:s => s.bestM >= 800},
+    {id:"fan-mail",         icon:"🌬️", name:"Fan Mail",         desc:"Climb 600 m in one run",             tier:"gold",   cond:s => s.bestM >= 600},
     {id:"gold-star",        icon:"🏅", name:"The Gold Star",    desc:"Catch the big gold star",            tier:"gold",   cond:s => s.goldStars >= 1},
-    {id:"runaway-chain",    icon:"⛓️", name:"Runaway Chain",    desc:"Reach a ×25 combo",                  tier:"gold",   cond:s => s.bestCombo >= 25},
+    {id:"runaway-chain",    icon:"⛓️", name:"Runaway Chain",    desc:"Reach a ×20 combo",                  tier:"gold",   cond:s => s.bestCombo >= 20},
     {id:"top-of-the-class", icon:"🏆", name:"Top of the Class", desc:"Score 25,000 points in one run",     tier:"gold",   cond:s => s.bestPts >= 25000},
     {id:"full-marks",       icon:"🎓", name:"Full Marks",       desc:"Clear the daily under all five rules",tier:"gold",  cond:s => s.rules.length >= 5},
     /* ---- platinum (1): the completionist ---- */

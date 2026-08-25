@@ -30,9 +30,9 @@ INSERT INTO achievement_defs (id, game_id, title, description, icon, tier, sort_
   ('ink-three-days-running', 'ink', 'Three Days Running', 'Keep a 3-day daily streak', '🔥', 'silver', 23),
   ('ink-frugal-hand', 'ink', 'Frugal Hand', 'Reach 200 m on 8 strokes or fewer', '🤏', 'silver', 24),
   ('ink-notebook-filled', 'ink', 'Notebook Filled', 'Play 50 runs', '📓', 'silver', 25),
-  ('ink-magnetic-north', 'ink', 'Magnetic North', 'Climb 800 m in one run', '🧲', 'gold', 26),
+  ('ink-fan-mail', 'ink', 'Fan Mail', 'Climb 600 m in one run', '🌬️', 'gold', 26),
   ('ink-gold-star', 'ink', 'The Gold Star', 'Catch the big gold star', '🏅', 'gold', 27),
-  ('ink-runaway-chain', 'ink', 'Runaway Chain', 'Reach a ×25 combo', '⛓️', 'gold', 28),
+  ('ink-runaway-chain', 'ink', 'Runaway Chain', 'Reach a ×20 combo', '⛓️', 'gold', 28),
   ('ink-top-of-the-class', 'ink', 'Top of the Class', 'Score 25,000 points in one run', '🏆', 'gold', 29),
   ('ink-full-marks', 'ink', 'Full Marks', 'Clear the daily under all five rules', '🎓', 'gold', 30),
   ('ink-ink-master', 'ink', 'INK Master', 'Unlock the other 30 trophies', '👑', 'platinum', 31)
