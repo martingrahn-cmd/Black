@@ -66,6 +66,20 @@ global.requestAnimationFrame = cb => { rafCb = cb; };
 global.performance = { now: () => tNow };
 let tNow = 0;
 
+// GameVolt-SDK: en stubb som spelar in anropen. Spelet ska funka lika bra utan
+// den, men portalvägen behöver testas någonstans. Webbläsaren ger både
+// window.GameVolt och den bara globalen — Node gör inte det åt oss.
+const gvCalls = [];
+const gvStub = {
+  leaderboard: { submit: (score, opts) => gvCalls.push(["submit", score, opts]) },
+  achievements: { unlock: id => gvCalls.push(["unlock", id]), isUnlocked: () => false,
+                  getUnlockedIds: () => Promise.resolve(new Set()) },
+  save: { registerMigration: cfg => gvCalls.push(["migration", Object.keys(cfg)]) },
+  auth: { onStateChange(){}, getUser: () => null },
+  init: id => gvCalls.push(["init", id])
+};
+global.GameVolt = gvStub; global.window.GameVolt = gvStub;
+
 require("./g.js");
 console.log("LADDNING OK");
 const stepFrames = n => { for(let i=0;i<n;i++){ tNow += 16.7; rafCb(tNow); } };
@@ -109,3 +123,28 @@ if (rows !== 31) throw new Error("fel antal troféer i samlingen: " + rows);
 handlers["trophyBackBtn"].click();
 if (!document.getElementById("trophySheet").hidden) throw new Error("trofésidan stängdes inte");
 console.log("TROFÉER OK (" + m[1] + "/31)");
+
+// --- SDK: init, migration och poäng till leaderboarden ---
+if (!gvCalls.some(c => c[0] === "init" && c[1] === "ink")) throw new Error("GameVolt.init kördes aldrig");
+const mig = gvCalls.find(c => c[0] === "migration");
+if (!mig) throw new Error("registerMigration kördes aldrig");
+for (const key of ["keys","merge","getAchievements","getScores"]){
+  if (!mig[1].includes(key)) throw new Error("migrationen saknar " + key);
+}
+if (!gvCalls.some(c => c[0] === "unlock")) throw new Error("inga troféer nådde SDK:n");
+
+handlers["startBtn"].click();
+const swat = y => {                      // ett streck ovanför bollen slår ner den
+  handlers["c"].pointerdown({clientX:120, clientY:y, pointerId:1});
+  for (let i=1;i<=6;i++) handlers["c"].pointermove({clientX:120+i*25, clientY:y, pointerId:1});
+  handlers["c"].pointerup({pointerId:1});
+};
+const over = document.getElementById("overSheet");
+let f = 0;
+while (over.hidden && f < 4000){ if (f > 600 && f % 40 === 0) swat(150); stepFrames(1); f++; }
+if (over.hidden) throw new Error("rundan tog aldrig slut");
+const pts = parseInt(document.getElementById("finalScore").textContent.replace(/\D/g, ""), 10) || 0;
+const sent = gvCalls.filter(c => c[0] === "submit");
+if (pts > 0 && !sent.length) throw new Error(pts + " poäng rapporterades aldrig");
+if (sent.some(c => c[2].mode !== "free")) throw new Error("fel leaderboard-läge: " + JSON.stringify(sent));
+console.log("SDK OK (" + gvCalls.length + " anrop, " + pts + " p, " + sent.length + " submit)");

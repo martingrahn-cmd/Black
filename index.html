@@ -295,6 +295,17 @@ const UNLOCKS = {2:"spikes", 3:"stars", 4:"roaming bumpers", 5:"gold blocks",
 const INK_MAX = 360;        // bläck mäts i pixlar streck
 // påfyllningen är generös nere vid marken och stramas åt med höjden
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+// The tuning sliders are a development tool — left open they hand out trophies
+// and leaderboard scores for free. Local files and localhost keep them, everyone
+// else needs ?tune=1.
+const DEV_TUNING = (() => {
+  try {
+    if (location.search.indexOf("tune=1") !== -1) return true;
+    const h = location.hostname;
+    return h === "" || h === "localhost" || h === "127.0.0.1" || h.slice(-6) === ".local";
+  } catch(e){ return false; }
+})();
+let tuned = false;   // sliders touched this session — the run is not comparable
 
 /* ---------- dagens utmaning ---------- */
 const DAILY_GOAL = 500;                 // meter till mål
@@ -349,6 +360,13 @@ const STORE = (() => {
 // Local-first: everything works offline, the GameVolt SDK is optional and only
 // kicks in when the game runs on gamevolt.io (cloud unlock, cross-device sync).
 const GAME_ID = "ink";
+// Portal bridge — the iframe wrapper on gamevolt.io listens for these.
+function gvPost(action, payload){
+  if (window.parent === window) return;
+  try {
+    window.parent.postMessage({type:"gamevolt", action, gameId:GAME_ID, payload: payload || {}}, "*");
+  } catch(e){}
+}
 const TROPHIES = (() => {
   const M = MPX;   // px per metre — ink is measured in pixels of drawn stroke
   const LIST = [
@@ -431,12 +449,6 @@ const TROPHIES = (() => {
   function save(){ STORE.set("stats", stats); STORE.set("trophies", unlocked); }
   function has(id){ return unlocked.indexOf(id) !== -1; }
   function count(){ let n = 0; for (const t of LIST) if (has(t.id)) n++; return n; }
-
-  function gvPost(action, payload){
-    try {
-      window.parent.postMessage({type:"gamevolt", action, gameId:GAME_ID, payload}, "*");
-    } catch(e){}
-  }
 
   // Earned on another device? Then it is already persisted — never toast twice.
   function elsewhere(id){
@@ -1356,6 +1368,10 @@ function gameOver(){
   STORE.set("best", best);
   STORE.set("bestP", bestP);
   TROPHIES.ev("end", {m: Math.floor(meters), pts: score, cause: deathCause});
+  gvPost("score", {score});
+  if (window.GameVolt && mode === "free" && score > 0 && !tuned){
+    try { GameVolt.leaderboard.submit(score, {mode: "free"}); } catch(e){}
+  }
   overEyebrow.textContent = "the ball fell";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
   if (mode === "daily"){
@@ -1390,6 +1406,11 @@ function finishDaily(){
   const streak = bumpStreak();
   TROPHIES.ev("daily-done", {m: DAILY_GOAL, pts: score,
                              rule: dailyRule ? dailyRule.name : "", streak});
+  gvPost("score", {score});
+  if (window.GameVolt && !tuned){
+    // days, not points — a daily score only compares within one seed
+    try { GameVolt.leaderboard.submit(streak, {mode: "daily-streak"}); } catch(e){}
+  }
   refreshDailyInfo();
   overEyebrow.textContent = "made it!";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
@@ -1910,8 +1931,8 @@ function play(opt){
   pauseSheet.hidden = true;
   pauseBtn.hidden = false;
   mode = opt.daily ? "daily" : "free";
-  tuneBtn.hidden = opt.daily;
-  if (opt.daily) tunePanel.hidden = true;
+  tuneBtn.hidden = opt.daily || !DEV_TUNING;
+  if (opt.daily || !DEV_TUNING) tunePanel.hidden = true;
   resize();
   reset(opt.cp === true);
   TROPHIES.ev("run", {daily: mode === "daily", cp: opt.cp === true});
@@ -1930,12 +1951,14 @@ musBtn.addEventListener("click", () => {
 });
 const tuneBtn = document.getElementById("tuneBtn");
 const tunePanel = document.getElementById("tunePanel");
+tuneBtn.hidden = !DEV_TUNING;
 tuneBtn.addEventListener("click", () => { tunePanel.hidden = !tunePanel.hidden; });
 function bind(id, out, key, scale){
   const el = document.getElementById(id), o = document.getElementById(out);
   el.addEventListener("input", () => {
     TUNE[key] = (+el.value) * scale;
     o.textContent = el.value;
+    tuned = true;
   });
 }
 bind("rG","oG","g",1);
