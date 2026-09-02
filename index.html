@@ -288,10 +288,11 @@ const GRID   = 26;
 const REST   = 0.78;        // studs mot ritat streck
 const VMAX   = 900;
 const TUNE   = { g: 600, kick: 320, slow: 0.34, bounce: 0.62, bkick: 40, regen: 115 };  // live-reglage
-const BAND   = 250;
+const BAND   = 250;         // avstånd mellan genererade band
 const MPX    = 19;          // pixlar per meter — styr hur fort höjden räknas
 const UNLOCKS = {2:"spikes", 3:"stars", 4:"roaming bumpers", 5:"gold blocks",
-                 6:"gates", 7:"fans", 8:"moving stars", 9:"magnets & double gates", 10:"the gold star"};         // avstånd mellan genererade band
+                 6:"gates", 7:"fans", 8:"moving stars", 9:"magnets & double gates", 10:"the gold star",
+                 11:"crosswinds", 13:"twin magnets", 15:"narrow gates"};
 const INK_MAX = 360;        // bläck mäts i pixlar streck
 // påfyllningen är generös nere vid marken och stramas åt med höjden
 const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -306,6 +307,15 @@ const DEV_TUNING = (() => {
   } catch(e){ return false; }
 })();
 let tuned = false;   // sliders touched this session — the run is not comparable
+// ?m=1200 startar en fri klättring på den höjden. Samma grind som reglagen, och
+// rundan räknas inte: det är ett verktyg för att kunna spela det djupa spelet.
+const DEV_START = (() => {
+  if (!DEV_TUNING) return 0;
+  try {
+    const hit = /[?&]m=(\d+)/.exec(location.search);
+    return hit ? Math.min(9000, +hit[1]) : 0;
+  } catch(e){ return 0; }
+})();
 
 /* ---------- dagens utmaning ---------- */
 const DAILY_GOAL = 500;                 // meter till mål
@@ -433,7 +443,7 @@ const TROPHIES = (() => {
   let stats = loadStats();
   let unlocked = STORE.get("trophies", []);
   if (!Array.isArray(unlocked)) unlocked = [];
-  let runStrokes = 0, runCp = false;
+  let runStrokes = 0, runCp = false, devRun = false;
 
   const elToast = document.getElementById("tToast");
   const elIcon  = document.getElementById("tToastIcon");
@@ -501,6 +511,8 @@ const TROPHIES = (() => {
 
   function ev(name, d){
     d = d || {};
+    if (name === "run") devRun = !!d.dev;
+    if (devRun) return;          // startad mitt på sidan — ingenting i rundan räknas
     switch(name){
       case "run":
         stats.runs++;
@@ -536,7 +548,7 @@ const TROPHIES = (() => {
 
   // Called every frame: the only trophy that needs to watch a run in progress.
   function climb(m){
-    if (stats.thrifty || runCp || m < 200 || runStrokes > 8) return;
+    if (stats.thrifty || runCp || devRun || m < 200 || runStrokes > 8) return;
     stats.thrifty = 1;
     check();
     save();
@@ -864,7 +876,8 @@ function reset(fromCp){
     bandRand = Math.random;
     dailyRule = null;
   }
-  const startM = (fromCp && mode === "free") ? checkpoint*100 : 0;
+  const startM = (fromCp && mode === "free") ? checkpoint*100
+               : (mode === "free" ? DEV_START : 0);
   ball = {x: W*0.5, y: -startM*MPX, vx: 90*(bandRand()<.5?-1:1), vy: -600, r: 13};
   strokes=[]; solids=[]; bumpers=[]; spikes=[]; orbs=[]; parts=[]; gates=[]; stars=[]; winds=[]; magnets=[];
   camTop = ball.y - H*0.58;
@@ -888,13 +901,18 @@ function reset(fromCp){
 /* ---------- banbygge ---------- */
 function rnd(a,b){ return a + Math.random()*(b-a); }
 function diff(){ return Math.min(1, Math.floor(meters/100)/6); }
+// diff() slår i taket på nivå 7 och UNLOCKS tar slut på nivå 10 — över 600 m
+// tar den här kurvan vid istället och drar långsamt åt allt som går att dra åt.
+// Noll under 600 m: allt som multipliceras med den försvinner i det gamla spelet.
+function deep(bh){ return Math.min(1, Math.max(0, (bh - 600)/800)); }
 
 function mkBumper(x, y, r){
   const bh = (startYRef - y)/MPX;
+  const dd = deep(bh);
   const b = {x, y, r, x0:x, seed: bandRand()*7, lit:0};
-  if (bh > 300 && bandRand() < 0.4){
-    b.amp = grnd(35, 85);
-    b.sp  = grnd(0.5, 0.9);
+  if (bh > 300 && bandRand() < 0.4 + 0.25*dd){
+    b.amp = grnd(35, 85) * (1 + 0.35*dd);
+    b.sp  = grnd(0.5, 0.9) * (1 + 0.25*dd);
     b.ph  = bandRand()*6.28;
   }
   return b;
@@ -920,6 +938,7 @@ function generateBand(){
   const y = genY;
   const bh = (startYRef - y)/MPX;         // bandets höjd i meter
   const d = Math.min(1, Math.floor(bh/100)/6);   // svårigheten kliver per nivå
+  const dd = deep(bh);                    // och fortsätter krypa efter nivå 7
   const calm = bh < 100;                  // hela nivå 1 är uppvärmning
   const nv = Math.floor(bh/100) + 1;      // visad nivå för det här bandet
   const left = MARGIN, right = W - RWALL;
@@ -931,11 +950,12 @@ function generateBand(){
       // Grind: port som andas — öppnas och stängs
       const g0 = {
         y:y, h:18, cx: grnd(left+120, right-120),
-        gmin: 56, gmax: grnd(165,205) - 40*d - MOD.narrow,
+        gmin: nv >= 15 ? 56 - 10*dd : 56,             // nivå 15: grindarna stänger tätare
+        gmax: Math.max(78, grnd(165,205) - 40*d - 22*dd - MOD.narrow),
         sp: grnd(0.55, 0.95) + 0.35*d, ph: bandRand()*6.28
       };
       gates.push(g0);
-      if (nv >= 9 && bandRand() < 0.5){
+      if (nv >= 9 && bandRand() < 0.5 + 0.3*dd){
         gates.push({ y:y-64, h:18,
           cx: Math.max(left+120, Math.min(right-120, g0.cx + grnd(-70,70))),
           gmin: 56, gmax: g0.gmax, sp: g0.sp, ph: g0.ph + Math.PI });
@@ -946,11 +966,11 @@ function generateBand(){
       solids.push({x: grnd(left+20, right-20-w1), y:y, w:w1, h:16, brk:false});
     } else {
       // Port: vägg tvärs över med en glugg (extra bred på nivå 2)
-      const gap = grnd(170,205) - 58*d - MOD.narrow + (nv === 2 ? 22 : 0);
+      const gap = Math.max(74, grnd(170,205) - 58*d - 20*dd - MOD.narrow + (nv === 2 ? 22 : 0));
       const gx = grnd(left+30, right-30-gap);
       solids.push({x:left, y:y, w:gx-left, h:18, brk:false});
       solids.push({x:gx+gap, y:y, w:right-(gx+gap), h:18, brk:false});
-      if (!calm && d > 0.35 && bandRand() < 0.55){
+      if (!calm && d > 0.35 && bandRand() < 0.55 + 0.25*dd){
         const sw = Math.min(70, right-(gx+gap));
         if (sw > 26 && !MOD.noSpikes) spikes.push({x:gx+gap, y:y-16, w:sw, h:16, dir:-1});  // står på väggen
       }
@@ -1012,8 +1032,16 @@ function generateBand(){
     addB(grnd(left+50, right-50), y, 24);
   }
 
-  if (nv >= 9 && bandRand() < 0.28){
-    magnets.push({x: grnd(left+70, right-70), y: y - grnd(40,140), r: 78, str: grnd(500,800)});
+  if (nv >= 9 && bandRand() < 0.28 + 0.2*dd){
+    magnets.push({x: grnd(left+70, right-70), y: y - grnd(40,140), r: 78,
+                  str: grnd(500,800) * (1 + 0.25*dd)});
+    if (nv >= 13 && bandRand() < 0.45*dd){        // nivå 13: dubbla magneter
+      magnets.push({x: grnd(left+70, right-70), y: y - grnd(150,240), r: 70, str: grnd(450,700)});
+    }
+  }
+
+  if (nv >= 11 && bandRand() < 0.30*dd){          // nivå 11: sidvind över vilket band som helst
+    winds.push({x:left, y:y-55, w:span, h:110, fx:(bandRand()<0.5?-1:1)*grnd(70,120)});
   }
 
   if (MOD.windy && nv < 7 && bandRand() < 0.25){
@@ -1026,7 +1054,7 @@ function generateBand(){
     orbs.push({x:side, y:y - grnd(60,150), r:13, t:bandRand()*6});
   }
 
-  genY -= BAND * (nv === 1 ? 1.3 : nv === 2 ? 1.15 : 1);
+  genY -= BAND * (nv === 1 ? 1.3 : nv === 2 ? 1.15 : 1 - 0.12*dd);   // sidan blir tätare
 }
 
 /* ---------- kollision ---------- */
@@ -1286,7 +1314,7 @@ function step(dt){
   }
 
   // bläck fylls på — snabbt i början, långsammare ju högre man kommer
-  addInk(TUNE.regen * MOD.regen * (1 - 0.45*diff()) * dt);
+  addInk(TUNE.regen * MOD.regen * (1 - 0.45*diff() - 0.12*deep(meters)) * dt);
 
   // partiklar
   for(let i=parts.length-1;i>=0;i--){
@@ -1363,14 +1391,17 @@ function step(dt){
 function gameOver(){
   state = "over";
   SND.setScratch(false);
-  best = Math.max(best, Math.floor(meters));
-  bestP = Math.max(bestP, score);
-  STORE.set("best", best);
-  STORE.set("bestP", bestP);
-  TROPHIES.ev("end", {m: Math.floor(meters), pts: score, cause: deathCause});
-  gvPost("score", {score});
-  if (window.GameVolt && mode === "free" && score > 0 && !tuned){
-    try { GameVolt.leaderboard.submit(score, {mode: "free"}); } catch(e){}
+  const devRun = DEV_START > 0 && mode === "free";   // startad mitt på sidan — räknas inte
+  if (!devRun){
+    best = Math.max(best, Math.floor(meters));
+    bestP = Math.max(bestP, score);
+    STORE.set("best", best);
+    STORE.set("bestP", bestP);
+    TROPHIES.ev("end", {m: Math.floor(meters), pts: score, cause: deathCause});
+    gvPost("score", {score});
+    if (window.GameVolt && mode === "free" && score > 0 && !tuned){
+      try { GameVolt.leaderboard.submit(score, {mode: "free"}); } catch(e){}
+    }
   }
   overEyebrow.textContent = "the ball fell";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
@@ -1935,7 +1966,8 @@ function play(opt){
   if (opt.daily || !DEV_TUNING) tunePanel.hidden = true;
   resize();
   reset(opt.cp === true);
-  TROPHIES.ev("run", {daily: mode === "daily", cp: opt.cp === true});
+  TROPHIES.ev("run", {daily: mode === "daily", cp: opt.cp === true,
+                      dev: DEV_START > 0 && mode === "free"});
   state = "play";
   SND.ensure();
 }
