@@ -90,6 +90,18 @@
   .score{font-family:"Caveat",cursive;font-size:76px;line-height:1;color:var(--ink);margin:6px 0 0}
   .best{font-size:12px;letter-spacing:.14em;color:var(--pale);margin-top:10px}
   .daily-info{margin-top:14px;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--pale)}
+  .rank{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--margin-red);margin-top:9px}
+  .rank[hidden]{display:none}
+  .links{display:flex;flex-wrap:wrap;justify-content:center;gap:0 6px;margin-top:20px}
+  .lnk{
+    background:none;border:none;border-bottom:1px solid transparent;cursor:pointer;
+    font-family:"IBM Plex Mono",monospace;font-size:10px;letter-spacing:.11em;
+    text-transform:uppercase;color:var(--pale);padding:12px 7px 10px;white-space:nowrap;
+  }
+  .lnk:hover{color:var(--ink);border-bottom-color:var(--ink)}
+  .lnk:focus-visible{outline:2px solid var(--margin-red);outline-offset:2px}
+  .lnk[hidden]{display:none}
+
   /* ---------- trophies: paper slip toast + collection page ---------- */
   .sheet.scroll{justify-content:flex-start;overflow-y:auto;padding-top:28px;z-index:4}
   .t-toast{
@@ -219,6 +231,7 @@
     <div class="eyebrow">paused</div>
     <div class="tag">the ball is waiting</div>
     <button class="btn" id="resumePlayBtn">Resume</button>
+    <button class="btn ghost" id="restartBtn">Restart</button>
     <button class="btn ghost" id="quitBtn">Back to start</button>
   </div>
 
@@ -226,10 +239,15 @@
     <div class="eyebrow" id="overEyebrow">the ball fell</div>
     <div class="score" id="finalScore">0 m</div>
     <div class="best" id="bestScore">BEST 0 M</div>
+    <div class="rank" id="overRank" hidden></div>
     <button class="btn" id="shareBtn" hidden>Copy result</button>
     <button class="btn" id="contBtn">Continue</button>
     <button class="btn ghost" id="againBtn">From the start</button>
-    <button class="btn ghost" id="overTrophyBtn">Trophies</button>
+    <div class="links">
+      <button class="lnk" id="lbBtn" hidden>Leaderboard</button>
+      <button class="lnk" id="overTrophyBtn">Trophies</button>
+      <button class="lnk" id="menuBtn">Menu</button>
+    </div>
   </div>
 
   <div class="sheet scroll" id="trophySheet" hidden>
@@ -272,6 +290,7 @@ const resumePlayBtn = document.getElementById("resumePlayBtn");
 const quitBtn    = document.getElementById("quitBtn");
 const finalScore = document.getElementById("finalScore");
 const bestScore  = document.getElementById("bestScore");
+const overRank   = document.getElementById("overRank");
 
 const C = {
   paper:"#EEF2F5", grid:"#C3D3DE", red:"#D8455A", ink:"#1E3A8F",
@@ -589,9 +608,8 @@ const TROPHIES = (() => {
   }
 
   function refresh(){
-    const label = "Trophies · " + count() + " / " + LIST.length;
-    if (btnA) btnA.textContent = label;
-    if (btnB) btnB.textContent = label;
+    if (btnA) btnA.textContent = "Trophies · " + count() + " / " + LIST.length;
+    if (btnB) btnB.textContent = "Trophies " + count() + "/" + LIST.length;
     if (elSheet && !elSheet.hidden){
       render();
       if (elCount) elCount.textContent = count() + " / " + LIST.length;
@@ -722,8 +740,9 @@ function fallbackCopy(txt, done){
 }
 
 const SND = (() => {
-  let ac=null, master=null, scratchGain=null, enabled=true, dead=false, lastThud=0,
-      musicGain=null, musicFilter=null, musicOn=true, nextNote=1.5, melIdx=2;
+  let ac=null, master=null, scratchGain=null, dead=false, lastThud=0,
+      musicGain=null, musicFilter=null, nextNote=1.5, melIdx=2;
+  let enabled = STORE.get("snd", true), musicOn = STORE.get("mus", true);
   function ensure(){
     if (dead) return;
     try {
@@ -842,8 +861,10 @@ const SND = (() => {
         }
       } catch(e){}
     },
-    toggleMusic(){ musicOn = !musicOn; return musicOn; },
-    toggle(){ enabled = !enabled; if (!enabled) this.setScratch(false); return enabled; }
+    isOn(){ return enabled; },
+    musicIsOn(){ return musicOn; },
+    toggleMusic(){ musicOn = !musicOn; STORE.set("mus", musicOn); return musicOn; },
+    toggle(){ enabled = !enabled; if (!enabled) this.setScratch(false); STORE.set("snd", enabled); return enabled; }
   };
 })();
 
@@ -853,6 +874,7 @@ let best = STORE.get("best", 0), bestP = STORE.get("bestP", 0), checkpoint = STO
 
 let ball, strokes, solids, bumpers, spikes, orbs, parts, gates, floats, stars, winds, magnets;
 let camTop, genY, startYRef, ink, meters, shake, timeScale, T, level, levelFlash, score, combo;
+let beatLeft = 0, breather = false;   // rytm: kluster av täta band, sen en öppen sträcka
 let drawing=null;
 
 function resize(){
@@ -882,6 +904,7 @@ function reset(fromCp){
   strokes=[]; solids=[]; bumpers=[]; spikes=[]; orbs=[]; parts=[]; gates=[]; stars=[]; winds=[]; magnets=[];
   camTop = ball.y - H*0.58;
   genY = ball.y - 260;
+  beatLeft = 0; breather = false;
   startYRef = 0;
   ink = startM > 0 ? INK_MAX*0.5 : INK_MAX;   // halvt bläck i straff vid checkpoint-start
   meters = startM; shake = 0; timeScale = 1; T = 0;
@@ -943,6 +966,35 @@ function generateBand(){
   const nv = Math.floor(bh/100) + 1;      // visad nivå för det här bandet
   const left = MARGIN, right = W - RWALL;
   const span = right-left;
+
+  // Sidan andas. Tre till fem täta band i rad, sen en öppen sträcka där det
+  // enda som finns är bläck att fylla på med — klättringen får en läsbar puls
+  // istället för ett jämnt band var trettonde meter. Nivå 1-2 lämnas i fred.
+  if (nv >= 3){
+    if (beatLeft <= 0){
+      breather = !breather;
+      beatLeft = breather ? 1 : 3 + Math.floor(bandRand()*3);
+    }
+    beatLeft--;
+  } else {
+    breather = false;
+  }
+
+  if (breather){
+    const side = bandRand()<0.5 ? left+grnd(30,80) : right-grnd(30,80);
+    orbs.push({x:side, y:y - grnd(60,150), r:13, t:bandRand()*6});
+    if (bandRand() < 0.4){                       // ibland en liten stjärnrad att sikta på
+      const n = 2 + Math.floor(bandRand()*2);
+      const cx = grnd(left+70, right-70);
+      for (let i=0;i<n;i++){
+        const sx = cx + (i-(n-1)/2)*34;
+        stars.push({x:sx, x0:sx, y:y - grnd(60,130), r:11, t:bandRand()*6, val:150, gold:false});
+      }
+    }
+    genY -= BAND * grnd(1.55, 1.85) * (1 - 0.12*dd);
+    return;
+  }
+
   const roll = bandRand();
 
   if (roll < 0.28){
@@ -1054,7 +1106,8 @@ function generateBand(){
     orbs.push({x:side, y:y - grnd(60,150), r:13, t:bandRand()*6});
   }
 
-  genY -= BAND * (nv === 1 ? 1.3 : nv === 2 ? 1.15 : 1 - 0.12*dd);   // sidan blir tätare
+  genY -= BAND * (nv === 1 ? 1.3 : nv === 2 ? 1.15
+                : (1 - 0.12*dd) * grnd(0.74, 0.84));   // täta band inne i klustret
 }
 
 /* ---------- kollision ---------- */
@@ -1388,6 +1441,22 @@ function step(dt){
   }
 }
 
+// Världsplaceringen för den bana rundan spelades på. Utan SDK säger raden
+// ingenting och förblir gömd.
+function showRank(board){
+  overRank.hidden = true;
+  overRank.textContent = "";
+  if (!window.GameVolt || !GameVolt.leaderboard || !GameVolt.leaderboard.getRank) return;
+  try {
+    GameVolt.leaderboard.getRank({mode: board}).then(r => {
+      if (state === "over" && r && r.rank){
+        overRank.textContent = "world rank #" + r.rank;
+        overRank.hidden = false;
+      }
+    }).catch(() => {});
+  } catch(e){}
+}
+
 function gameOver(){
   state = "over";
   SND.setScratch(false);
@@ -1402,6 +1471,9 @@ function gameOver(){
     if (window.GameVolt && mode === "free" && score > 0 && !tuned){
       try { GameVolt.leaderboard.submit(score, {mode: "free"}); } catch(e){}
     }
+    if (mode === "free") showRank("free"); else overRank.hidden = true;
+  } else {
+    overRank.hidden = true;
   }
   overEyebrow.textContent = "the ball fell";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
@@ -1442,6 +1514,7 @@ function finishDaily(){
     // days, not points — a daily score only compares within one seed
     try { GameVolt.leaderboard.submit(streak, {mode: "daily-streak"}); } catch(e){}
   }
+  showRank("daily-streak");
   refreshDailyInfo();
   overEyebrow.textContent = "made it!";
   finalScore.textContent = score.toLocaleString("en-US") + " pts";
@@ -1972,11 +2045,13 @@ function play(opt){
   SND.ensure();
 }
 const sndBtn = document.getElementById("sndBtn");
+sndBtn.textContent = "sound: " + (SND.isOn() ? "on" : "off");
 sndBtn.addEventListener("click", () => {
   SND.ensure();
   sndBtn.textContent = "sound: " + (SND.toggle() ? "on" : "off");
 });
 const musBtn = document.getElementById("musBtn");
+musBtn.textContent = "music: " + (SND.musicIsOn() ? "on" : "off");
 musBtn.addEventListener("click", () => {
   SND.ensure();
   musBtn.textContent = "music: " + (SND.toggleMusic() ? "on" : "off");
@@ -1999,6 +2074,21 @@ bind("rR","oR","regen",1);
 bind("rB","oB","bounce",0.01);
 bind("rBK","oBK","bkick",1);
 bind("rS","oS","slow",0.01);
+
+const lbBtn = document.getElementById("lbBtn");
+if (window.GameVolt && GameVolt.ui && GameVolt.ui.leaderboard){
+  lbBtn.hidden = false;
+  lbBtn.addEventListener("click", () => {
+    try {
+      GameVolt.ui.leaderboard(mode === "daily"
+        ? {title:"INK — daily streak", mode:"daily-streak", accent:"#1E3A8F",
+           format: v => v + (v === 1 ? " day" : " days")}
+        : {title:"INK — free climb", mode:"free", accent:"#1E3A8F", scoreLabel:"pts"});
+    } catch(e){}
+  });
+}
+document.getElementById("menuBtn").addEventListener("click", quitToStart);
+document.getElementById("restartBtn").addEventListener("click", () => play({daily: mode === "daily"}));
 
 startBtn.addEventListener("click", () => play({daily:false}));
 dailyBtn.addEventListener("click", () => play({daily:true}));
