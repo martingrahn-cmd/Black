@@ -4,7 +4,7 @@
 // long as the player is online, so shipping an update means pushing and nothing
 // else. The cache is only the offline copy. Static assets are cache-first and
 // keyed to VERSION — bump it when an asset under assets/ changes.
-const VERSION = 'ink-v1';
+const VERSION = 'v2';
 const CACHE = 'ink-' + VERSION;
 const SHELL = [
   './',
