@@ -38,6 +38,17 @@ everything still works straight out of `localStorage`.
 
 `sql/achievements.sql` holds the matching 31 `achievement_defs` rows for the portal database.
 
+## Install
+
+The game is a PWA. On the phone, open it and pick *Add to home screen* — it then runs
+fullscreen in portrait with no browser chrome, and works offline.
+
+Updates need nothing but a push: the service worker fetches the page network-first, so a
+reload always lands on the newest version while online, and the cache is only the offline
+copy. When a new version has already been downloaded in the installed app, an **Update**
+button appears on the start and game over screens — it never swaps versions mid-run.
+Bump `VERSION` in `sw.js` when a file under `assets/` changes.
+
 ## Development
 
 The in-game tuning button exposes live physics values (gravity, kick, bounce, ink, slow-mo).
